@@ -1,0 +1,72 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop  
+  pull_request:
+    branches:
+      - main
+      - develop  # Se agregó develop para PRs también
+    types: [opened, closed, review_requested]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: 1.20
+
+    - name: Build
+      run: go build -o mi-proyecto .
+
+    - name: Run tests
+      run: go test ./...
+
+    # Notificar en Discord cuando se abre un Pull Request en main o develop
+    - name: Notify Discord - PR Opened
+      if: github.event_name == 'pull_request' && github.event.action == 'opened'
+      run: |
+        curl -X POST -H "Content-Type: application/json" -d '{
+          "content": " **Nuevo Pull Request Abierto en `${{ github.base_ref }}`**: ${{ github.event.pull_request.title }}\n🔗 [Ver PR](${{ github.event.pull_request.html_url }})"
+        }' ${{ secrets.DISCORD_WEBHOOK_DEV }}
+
+    # Notificar en Discord cuando un Pull Request es aprobado o revisado en main o develop
+    - name: Notify Discord - PR Review Requested
+      if: github.event_name == 'pull_request' && github.event.action == 'review_requested'
+      run: |
+        curl -X POST -H "Content-Type: application/json" -d '{
+          "content": " **Se ha solicitado revisión en un PR en `${{ github.base_ref }}`**: ${{ github.event.pull_request.title }}\n🔗 [Ver PR](${{ github.event.pull_request.html_url }})"
+        }' ${{ secrets.DISCORD_WEBHOOK_DEV }}
+
+    # Notificar en Discord cuando un Pull Request se mergea en main o develop
+    - name: Notify Discord - PR Merged
+      if: github.event.pull_request.merged == true
+      run: |
+        curl -X POST -H "Content-Type: application/json" -d '{
+          "content": " **Pull Request Mergeado en `${{ github.base_ref }}`**: ${{ github.event.pull_request.title }}\n🔗 [Ver PR](${{ github.event.pull_request.html_url }})"
+        }' ${{ secrets.DISCORD_WEBHOOK_DEV }}
+
+    # Notificar en Discord cuando hay un nuevo Push en main o develop
+    - name: Notify Discord - Push to main or develop
+      if: github.event_name == 'push'
+      run: |
+        curl -X POST -H "Content-Type: application/json" -d '{
+          "content": "🛠 **Nuevo Push en `${{ github.ref_name }}`**\n🔗 Commit: ${{ github.sha }}"
+        }' ${{ secrets.DISCORD_WEBHOOK_GENERAL }}
+
+    # Notificar en Discord cuando las pruebas pasan con éxito en main o develop
+    - name: Notify Discord - Tests Passed
+      if: success()
+      run: |
+        curl -X POST -H "Content-Type: application/json" -d '{
+          "content": " **Pruebas exitosas en `${{ github.ref_name }}`**\n🔗 Commit: ${{ github.sha }}"
+        }' ${{ secrets.DISCORD_WEBHOOK_TESTS }}  # Comentario corregido en YAML
+
