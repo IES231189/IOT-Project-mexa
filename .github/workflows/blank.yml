@@ -59,9 +59,8 @@ jobs:
       if: github.event_name == 'push'
       run: |
         curl -X POST -H "Content-Type: application/json" -d '{
-          "content": "🛠 **Nuevo Push en `${{ github.ref_name }}`**\n🔗 Commit: ${{ github.sha }}"
+          "content": "🛠 **Nuevo Push en `${{ github.ref_name }}`**\n👤 Autor: `${{ github.actor }}`\n🔗 Commit: ${{ github.sha }}"
         }' ${{ secrets.DISCORD_WEBHOOK_GENERAL }}
-
     # Notificar en Discord cuando las pruebas pasan con éxito en main o develop
     - name: Notify Discord - Tests Passed
       if: success()
