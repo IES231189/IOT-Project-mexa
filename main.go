@@ -5,40 +5,42 @@ import (
     "os"
     "github.com/joho/godotenv"
     "iot-project/internal/Accesos/application/services"
-    "iot-project/internal/Accesos/infraestructure/handler"
     "iot-project/internal/Accesos/infraestructure/repository"
+    MqttConnection "iot-project/internal/MqttConnection"
+
+    //Distance in sensor ultrasonico 
+    DistanceServices"iot-project/internal/Distancias/application/services"
+    DistanceRepo "iot-project/internal/Distancias/infraestructure/repository"
+    //DistanceMQTT "iot-project/internal/MqttConnection"
+
 )
 
-
-
-
-
-
 func main() {
-
     if err := godotenv.Load(); err != nil {
         log.Fatalf("Error loading .env file: %s", err)
     }
 
     broker := os.Getenv("MQTT_BROKER")
     clientID := os.Getenv("MQTT_CLIENT_ID")
-    topic := os.Getenv("MQTT_TOPIC")
+    topicAcceso := os.Getenv("MQTT_TOPIC1") 
+    topicDistancia := os.Getenv("MQTT_TOPIC2") // Asegúrate de definir esta variable en tu .env
 
-    // Inicializa el handler MQTT
-    mqttHandler := handler.NewMQTTHandler(broker, clientID)
+    // Conexión con MQTT
+    mqttService := MqttConnection.NewMQTTService(broker, clientID)
 
-    // Inicializa el repositorio MQTT
-    mqttRepo := repository.NewMQTTRepository(mqttHandler)
-
-    // Inicializa el repositorio de base de datos
+    // Accesos
     dbRepo := repository.NewDBRepository()
+    accessRepo := repository.NewMQTTRepository(mqttService)
+    accessService := services.NewAccessService(accessRepo, dbRepo)
 
-    // Inicializa el servicio de acceso
-    accessService := services.NewAccessService(mqttRepo, dbRepo)
+    // Distancia
+    distanceMqttRepo := DistanceRepo.NewMqttDistanceRepository(mqttService)
+    distanceDbRepo := DistanceRepo.NewDBRepository()
+    distanceService := DistanceServices.NewDistanceSensorService(distanceMqttRepo, distanceDbRepo)
 
-    // Suscríbete al tópico y comienza a escuchar
-    accessService.StartListening(topic)
+    // Iniciar escucha de tópicos
+    accessService.StartListening(topicAcceso)
+    distanceService.StartListening(topicDistancia)
 
-    // Mantén la aplicación en ejecución
     select {}
 }
