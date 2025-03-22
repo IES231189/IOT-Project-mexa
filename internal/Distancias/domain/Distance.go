@@ -1,10 +1,11 @@
 package domain
+import "time"
 
 type Distance struct {
 	ID         uint `gorm:"primaryKey;autoIncrement"`
 	Distancia  float64
 	Proximidad string
-	Fecha      int64
+	Fecha      time.Time
 }
 
 func (D *Distance) ValidDistance() bool {
