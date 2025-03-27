@@ -16,7 +16,7 @@ func NewMQTTService(broker string, clientID string) *MQTTService {
     opts := MQTT.NewClientOptions().AddBroker(broker)
     opts.SetClientID(clientID)
 
-    // Configura usuario y contraseña si es necesario
+   
     mqttUsername := os.Getenv("MQTT_USERNAME")
     mqttPassword := os.Getenv("MQTT_PASSWORD")
     opts.SetUsername(mqttUsername)

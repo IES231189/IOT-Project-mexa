@@ -12,10 +12,23 @@ import (
     DistanceServices"iot-project/internal/Distancias/application/services"
     DistanceRepo "iot-project/internal/Distancias/infraestructure/repository"
     //DistanceMQTT "iot-project/internal/MqttConnection"
+    "iot-project/internal/websocket"
+    "net/http"
 
 )
 
 func main() {
+
+    wsHandler := websocket.NewWebSocketHandler()
+	go wsHandler.HandleMessages()
+
+	// Configuración del servidor HTTP
+	http.HandleFunc("/ws", wsHandler.HandleConnections)
+
+	go func() {
+		log.Fatal(http.ListenAndServe(":5000", nil))
+	}()
+
     if err := godotenv.Load(); err != nil {
         log.Fatalf("Error loading .env file: %s", err)
     }
@@ -31,12 +44,12 @@ func main() {
     // Accesos
     dbRepo := repository.NewDBRepository()
     accessRepo := repository.NewMQTTRepository(mqttService)
-    accessService := services.NewAccessService(accessRepo, dbRepo)
+    accessService := services.NewAccessService(accessRepo, dbRepo , wsHandler)
 
     // Distancia
     distanceMqttRepo := DistanceRepo.NewMqttDistanceRepository(mqttService)
     distanceDbRepo := DistanceRepo.NewDBRepository()
-    distanceService := DistanceServices.NewDistanceSensorService(distanceMqttRepo, distanceDbRepo)
+    distanceService := DistanceServices.NewDistanceSensorService(distanceMqttRepo, distanceDbRepo ,wsHandler)
 
     // Iniciar escucha de tópicos
     accessService.StartListening(topicAcceso)
