@@ -27,9 +27,16 @@ func (r *MQTTRepository) Listen(topic string, callback func(access domain.Access
             log.Printf("Error decoding MQTT message: %s", err)
             return
         }
-
+        
         if mqtt.Estado == "incorrecto" {
             log.Printf("No se puede guardar el mensaje: %s", mqtt.Pin)
+            access := domain.Access{
+                CodigoIngresado: mqtt.Pin,
+                Estado:          mqtt.Estado,
+                Fecha:           time.Now(),
+            }
+
+            callback(access)
         } else if mqtt.Estado == "correcto" {
             access := domain.Access{
                 CodigoIngresado: mqtt.Pin,

@@ -1,4 +1,3 @@
-// internal/Accesos/infraestructure/repository/MysqlRepository.go
 package repository
 
 import (
