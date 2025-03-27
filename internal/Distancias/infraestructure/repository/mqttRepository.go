@@ -19,12 +19,12 @@ func NewMqttDistanceRepository(mqttService *mqtt.MQTTService) *MqttDistanceRepos
 	}
 }
 
-// Listen se suscribe al tópico MQTT y recibe la distancia
+
 func (r *MqttDistanceRepository) Listen(topic string, callback func(distance domain.Distance)) {
 	r.mqttServices.Subscribe(topic, func(client MQTT.Client, msg MQTT.Message) {
 		var distancia float64
 
-		// Intentamos decodificar el mensaje
+		
 		if err := json.Unmarshal(msg.Payload(), &distancia); err != nil {
 			log.Printf("Error al decodificar el mensaje: %s", err)
 			return
@@ -33,12 +33,11 @@ func (r *MqttDistanceRepository) Listen(topic string, callback func(distance dom
 
 		distance := domain.Distance{
 			Distancia: distancia,
-			Fecha:     time.Now(),  // Usamos time.Now() directamente
+			Fecha:     time.Now(),  
 		}
 
 		
 		if !distance.ValidDistance() {
-			log.Println("Distancia no válida, no se procesará el mensaje.")
 			return
 		}
 

@@ -28,7 +28,6 @@ func NewDBRepository() *DBRepository {
 		panic("Failed to connect to database")
 	}
 
-	// AutoMigrate para crear la tabla con los campos correctos
 	db.AutoMigrate(&domain.Distance{})
 
 	return &DBRepository{
@@ -37,7 +36,7 @@ func NewDBRepository() *DBRepository {
 }
 
 func (r *DBRepository) Save(distance domain.Distance) error {
-	// Antes de guardar, asignamos el nivel de proximidad
+	
 	distance.IsProximity()
 
 	result := r.db.Create(&distance)
